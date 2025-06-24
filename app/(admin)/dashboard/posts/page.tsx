@@ -17,7 +17,7 @@ import { ptBR } from 'date-fns/locale'
 import { SearchFilters } from '@/components/search-filters'
 import { PaginationControls } from '@/components/pagination-controls'
 import { PostActionsDropdown } from '@/components/post-actions-dropdown'
-import { searchPosts } from '@/lib/actions/posts'
+import { searchPosts } from '@/app/actions/posts'
 import { PostStatus } from '@prisma/client'
 
 interface PostsPageProps {

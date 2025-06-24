@@ -9,7 +9,8 @@ import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
 import { SearchFilters } from '@/components/search-filters'
 import { PaginationControls } from '@/components/pagination-controls'
-import { searchPosts, getCategories } from '@/lib/actions/posts'
+import { searchPosts } from '@/app/actions/posts'
+import { getCategories } from '@/app/actions/categories'
 import { PostStatus } from '@prisma/client'
 
 interface BlogPageProps {
@@ -46,7 +47,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
   // Fetch data in parallel
   const [postsResult, categories] = await Promise.all([
     searchPosts(filters),
-    getCategories()
+    getCategories(true) // includeCount = true
   ])
 
   return (

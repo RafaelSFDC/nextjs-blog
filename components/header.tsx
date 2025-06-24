@@ -48,10 +48,10 @@ export function Header() {
           <Link href="/blog">
             <Button variant="ghost" className="hover:bg-accent/50">Posts</Button>
           </Link>
-          <Link href="/#sobre">
+          <Link href="/about">
             <Button variant="ghost" className="hover:bg-accent/50">Sobre</Button>
           </Link>
-          <Link href="/#contato">
+          <Link href="/contact">
             <Button variant="ghost" className="hover:bg-accent/50">Contato</Button>
           </Link>
         </nav>

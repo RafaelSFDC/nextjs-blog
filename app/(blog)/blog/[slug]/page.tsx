@@ -11,6 +11,11 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { SocialShare } from '@/components/social-share'
+import { ReadingProgress } from '@/components/reading-progress'
+import { ScrollToTop } from '@/components/scroll-to-top'
+import { BlogBreadcrumbs } from '@/components/breadcrumbs'
+import { calculateReadingTime } from '@/lib/reading-time'
 import { getPostBySlug, getRelatedPosts } from '@/app/actions/posts'
 import { notFound } from 'next/navigation'
 import { CommentSection } from './comment-section'
@@ -41,19 +46,22 @@ function PostContent({
   post: PostWithDetails
   relatedPosts: PostWithDetails[]
 }) {
+  const readingTime = calculateReadingTime(post.content)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <Header />
+      <ReadingProgress target="article" />
+      <ScrollToTop variant="fixed" />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Back Button */}
+        {/* Breadcrumbs */}
         <div className="mb-6">
-          <Link href="/blog">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar aos posts
-            </Button>
-          </Link>
+          <BlogBreadcrumbs
+            postTitle={post.title}
+            categoryName={post.category?.name}
+            categorySlug={post.category?.slug}
+          />
         </div>
 
         {/* Post Header */}
@@ -110,6 +118,10 @@ function PostContent({
                     <MessageCircle className="h-4 w-4" />
                     <span>{post._count.comments} comentários</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <span>•</span>
+                    <span>{readingTime.text}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -118,10 +130,14 @@ function PostContent({
                 <Heart className="h-4 w-4" />
                 42
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Share2 className="h-4 w-4" />
-                Compartilhar
-              </Button>
+              <SocialShare
+                url={`/blog/${post.slug}`}
+                title={post.title}
+                description={post.excerpt || ''}
+                hashtags={post.tags.map(tag => tag.name)}
+                size="sm"
+                variant="outline"
+              />
             </div>
           </div>
 

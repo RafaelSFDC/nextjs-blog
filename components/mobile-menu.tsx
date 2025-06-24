@@ -34,7 +34,7 @@ export function MobileMenu() {
             Navegue pelo blog
           </SheetDescription>
         </SheetHeader>
-        
+
         <div className="mt-6 space-y-6">
           {/* Navigation Links */}
           <div className="space-y-3">
@@ -50,13 +50,13 @@ export function MobileMenu() {
                 Posts
               </Button>
             </Link>
-            <Link href="/#sobre" onClick={closeMenu}>
+            <Link href="/about" onClick={closeMenu}>
               <Button variant="ghost" className="w-full justify-start gap-3">
                 <User className="h-4 w-4" />
                 Sobre
               </Button>
             </Link>
-            <Link href="/#contato" onClick={closeMenu}>
+            <Link href="/contact" onClick={closeMenu}>
               <Button variant="ghost" className="w-full justify-start gap-3">
                 <MessageCircle className="h-4 w-4" />
                 Contato

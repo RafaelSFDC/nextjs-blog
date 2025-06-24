@@ -13,6 +13,7 @@ import { Footer } from '@/components/footer'
 import { SearchFilters } from '@/components/search-filters'
 import { PaginationControls } from '@/components/pagination-controls'
 import { BlogSidebar } from '@/components/blog-sidebar'
+import { calculateReadingTime } from '@/lib/reading-time'
 import { searchPosts } from '@/app/actions/posts'
 import { getCategories } from '@/app/actions/categories'
 import { PostStatus } from '@prisma/client'
@@ -138,6 +139,8 @@ async function BlogContent({ searchParams }: BlogPageProps) {
 }
 
 function PostCard({ post }: { post: PostWithDetails }) {
+  const readingTime = calculateReadingTime(post.content)
+
   return (
     <Link href={`/blog/${post.slug}`}>
       <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-0 shadow-md hover:scale-[1.02]">
@@ -214,6 +217,10 @@ function PostCard({ post }: { post: PostWithDetails }) {
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span>{post.author.firstName}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{readingTime.text}</span>
               </div>
             </div>
             <div className="flex items-center gap-1">

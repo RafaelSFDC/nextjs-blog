@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { getBlogStats } from '@/app/actions/dashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AnalyticsPage() {
   const stats = await getBlogStats()
 

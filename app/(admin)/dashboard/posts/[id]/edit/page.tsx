@@ -7,6 +7,8 @@ import { getTags } from '@/app/actions/tags'
 import { notFound } from 'next/navigation'
 import { EditPostForm } from './edit-post-form'
 
+export const dynamic = 'force-dynamic'
+
 interface EditPostPageProps {
   params: Promise<{ id: string }>
 }

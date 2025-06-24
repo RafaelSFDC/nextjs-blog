@@ -11,6 +11,8 @@ import { Header } from '@/components/header'
 import { searchPosts } from '@/app/actions/posts'
 import { PostStatus } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   // Buscar posts em destaque e recentes em paralelo
   const [featuredResult, recentResult] = await Promise.all([

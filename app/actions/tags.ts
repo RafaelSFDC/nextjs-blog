@@ -2,8 +2,8 @@
 
 import { prisma } from '@/lib/prisma'
 import { tagSchema } from '@/lib/validations/post'
-import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
+import { ensureUserSynced } from '@/lib/clerk-sync'
 
 // GET /api/tags - Listar todas as tags
 export async function getTags(includeCount: boolean = false) {
@@ -64,18 +64,10 @@ export async function getTagById(id: string) {
 // POST /api/tags - Criar nova tag
 export async function createTag(formData: FormData) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para criar tags')
     }
 
@@ -130,18 +122,10 @@ export async function createTag(formData: FormData) {
 // PUT /api/tags/[id] - Atualizar tag
 export async function updateTag(id: string, formData: FormData) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para editar tags')
     }
 
@@ -210,18 +194,10 @@ export async function updateTag(id: string, formData: FormData) {
 // DELETE /api/tags/[id] - Deletar tag
 export async function deleteTag(id: string) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para deletar tags')
     }
 

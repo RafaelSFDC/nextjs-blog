@@ -7,6 +7,7 @@ import { auth } from '@clerk/nextjs/server'
 import { PostWithDetails, PaginatedResult } from '@/types/blog'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { ensureUserSynced, syncCurrentUser } from '@/lib/clerk-sync'
 
 // GET /api/posts - Listar posts com filtros e paginação
 export async function searchPosts(searchParams: {
@@ -205,10 +206,7 @@ export async function getPostById(id: string) {
     }
 
     // Verificar se o post está publicado ou se o usuário é o autor
-    const { userId } = await auth()
-    const user = userId ? await prisma.user.findUnique({
-      where: { clerkId: userId }
-    }) : null
+    const user = await syncCurrentUser()
 
     if (post.status !== PostStatus.PUBLISHED && post.authorId !== user?.id) {
       throw new Error('Post não encontrado')
@@ -292,10 +290,7 @@ export async function getPostBySlug(slug: string) {
     }
 
     // Verificar se o post está publicado ou se o usuário é o autor
-    const { userId } = await auth()
-    const user = userId ? await prisma.user.findUnique({
-      where: { clerkId: userId }
-    }) : null
+    const user = await syncCurrentUser()
 
     if (post.status !== PostStatus.PUBLISHED && post.authorId !== user?.id) {
       throw new Error('Post não encontrado')
@@ -385,20 +380,8 @@ export async function getRelatedPosts(postId: string, limit: number = 4) {
 // POST /api/posts - Criar novo post
 export async function createPost(formData: FormData) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário existe no banco
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user) {
-      throw new Error('Usuário não encontrado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
     const data = {
       title: formData.get('title') as string,
@@ -474,20 +457,8 @@ export async function createPost(formData: FormData) {
 // PUT /api/posts/[id] - Atualizar post
 export async function updatePost(id: string, formData: FormData) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário existe no banco
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user) {
-      throw new Error('Usuário não encontrado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
     // Verificar se o post existe
     const existingPost = await prisma.post.findUnique({

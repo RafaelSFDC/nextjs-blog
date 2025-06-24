@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { auth } from '@clerk/nextjs/server'
+import { ensureUserSynced } from '@/lib/clerk-sync'
 
 export interface BlogStats {
   totalPosts: number
@@ -42,20 +42,8 @@ export interface BlogStats {
 // GET /api/dashboard/stats - Buscar estatísticas do dashboard
 export async function getDashboardStats(): Promise<BlogStats> {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário existe no banco
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user) {
-      throw new Error('Usuário não encontrado')
-    }
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
     // Buscar estatísticas gerais
     const [
@@ -182,11 +170,8 @@ export const getBlogStats = getDashboardStats
 // Função auxiliar para buscar estatísticas de posts por período
 export async function getPostsStatsByPeriod(days: number = 30) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    await ensureUserSynced()
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
@@ -216,11 +201,8 @@ export async function getPostsStatsByPeriod(days: number = 30) {
 // Função auxiliar para buscar estatísticas de comentários por período
 export async function getCommentsStatsByPeriod(days: number = 30) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    await ensureUserSynced()
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
@@ -250,11 +232,8 @@ export async function getCommentsStatsByPeriod(days: number = 30) {
 // Função auxiliar para buscar posts mais populares
 export async function getPopularPosts(limit: number = 10) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    await ensureUserSynced()
 
     const posts = await prisma.post.findMany({
       where: {
@@ -295,11 +274,8 @@ export async function getPopularPosts(limit: number = 10) {
 // Função auxiliar para buscar categorias mais utilizadas
 export async function getPopularCategories(limit: number = 10) {
   try {
-    const { userId } = await auth()
-
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
+    // Sincronizar usuário automaticamente
+    await ensureUserSynced()
 
     const categories = await prisma.category.findMany({
       include: {

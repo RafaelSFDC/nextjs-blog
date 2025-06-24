@@ -5,6 +5,8 @@ import { getCategories } from '@/app/actions/categories'
 import { getTags } from '@/app/actions/tags'
 import { NewPostForm } from './new-post-form'
 
+export const dynamic = 'force-dynamic'
+
 export default async function NewPostPage() {
   // Buscar dados em paralelo
   const [categories, tags] = await Promise.all([

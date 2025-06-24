@@ -2,9 +2,9 @@
 
 import { prisma } from '@/lib/prisma'
 import { categorySchema } from '@/lib/validations/post'
-import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { CategoryWithCount } from '@/types/blog'
+import { ensureUserSynced } from '@/lib/clerk-sync'
 
 // GET /api/categories - Listar todas as categorias
 export async function getCategories(): Promise<any[]>
@@ -68,18 +68,10 @@ export async function getCategoryById(id: string) {
 // POST /api/categories - Criar nova categoria
 export async function createCategory(formData: FormData) {
   try {
-    const { userId } = await auth()
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para criar categorias')
     }
 
@@ -135,18 +127,10 @@ export async function createCategory(formData: FormData) {
 // PUT /api/categories/[id] - Atualizar categoria
 export async function updateCategory(id: string, formData: FormData) {
   try {
-    const { userId } = await auth()
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para editar categorias')
     }
 
@@ -216,18 +200,10 @@ export async function updateCategory(id: string, formData: FormData) {
 // DELETE /api/categories/[id] - Deletar categoria
 export async function deleteCategory(id: string) {
   try {
-    const { userId } = await auth()
+    // Sincronizar usuário automaticamente
+    const user = await ensureUserSynced()
 
-    if (!userId) {
-      throw new Error('Não autorizado')
-    }
-
-    // Verificar se o usuário é admin ou editor
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (user.role !== 'ADMIN' && user.role !== 'EDITOR') {
       throw new Error('Sem permissão para deletar categorias')
     }
 

@@ -3,18 +3,29 @@ import { User, Post, Category, Tag, Comment, UserRole, PostStatus, CommentStatus
 export type { User, Post, Category, Tag, Comment, UserRole, PostStatus, CommentStatus }
 
 export interface PostWithDetails extends Post {
-  author: User
+  author: User | {
+    id: string
+    firstName: string | null
+    lastName: string | null
+    imageUrl: string | null
+    email?: string
+  }
   category: Category | null
   tags: Tag[]
-  comments: CommentWithAuthor[]
+  comments?: CommentWithAuthor[]
   _count: {
     comments: number
   }
 }
 
 export interface CommentWithAuthor extends Comment {
-  author: User
-  replies: CommentWithAuthor[]
+  author: User | {
+    id: string
+    firstName: string | null
+    lastName: string | null
+    imageUrl: string | null
+  }
+  replies?: CommentWithAuthor[]
 }
 
 export interface CategoryWithCount extends Category {
@@ -73,8 +84,9 @@ export interface BlogStats {
   recentPosts: Array<{
     id: string
     title: string
+    slug: string
     status: string
-    createdAt: string
+    createdAt: Date
     author: {
       firstName: string | null
       lastName: string | null
@@ -90,13 +102,14 @@ export interface BlogStats {
     id: string
     content: string
     status: string
-    createdAt: string
+    createdAt: Date
     author: {
       firstName: string | null
       lastName: string | null
     }
     post: {
       title: string
+      slug: string
     }
   }>
   monthlyData: Array<{

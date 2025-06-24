@@ -1,6 +1,3 @@
-"use client"
-
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,34 +12,10 @@ import {
   Calendar,
   Tag
 } from 'lucide-react'
-import { BlogStats } from '@/types/blog'
-import { toast } from 'sonner'
+import { getDashboardStats } from '@/app/actions/dashboard'
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<BlogStats | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/dashboard/stats')
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      } else {
-        toast.error('Erro ao carregar estatísticas')
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-      toast.error('Erro ao carregar estatísticas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchStats()
-  }, [])
+export default async function DashboardPage() {
+  const stats = await getDashboardStats()
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
@@ -67,12 +40,7 @@ export default function DashboardPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        {loading ? (
-          <div className="text-center py-8">
-            <p>Carregando estatísticas...</p>
-          </div>
-        ) : stats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Posts</CardTitle>
@@ -125,11 +93,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        ) : (
-          <div className="text-center py-8">
-            <p>Erro ao carregar estatísticas</p>
-          </div>
-        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Recent Posts */}
@@ -147,7 +110,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {stats && stats.recentPosts.map((post) => (
+                  {stats.recentPosts.map((post) => (
                     <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h3 className="font-medium mb-1 line-clamp-1">
@@ -160,12 +123,12 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <MessageCircle className="h-3 w-3" />
-                            <span>{post._count.comments}</span>
+                            <span>{(post as any)._count.comments}</span>
                           </div>
-                          {post.category && (
+                          {(post as any).category && (
                             <div className="flex items-center gap-1">
                               <Tag className="h-3 w-3" />
-                              <span>{post.category.name}</span>
+                              <span>{(post as any).category.name}</span>
                             </div>
                           )}
                         </div>
@@ -175,7 +138,7 @@ export default function DashboardPage() {
                       </Badge>
                     </div>
                   ))}
-                  {(!stats || stats.recentPosts.length === 0) && (
+                  {stats.recentPosts.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
                       Nenhum post encontrado
                     </p>
@@ -226,7 +189,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {stats && stats.recentComments.map((comment) => (
+                  {stats.recentComments.map((comment) => (
                     <div key={comment.id} className="p-3 border rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">
@@ -245,7 +208,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
-                  {(!stats || stats.recentComments.length === 0) && (
+                  {stats.recentComments.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">
                       Nenhum comentário encontrado
                     </p>

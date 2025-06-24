@@ -43,7 +43,7 @@ export interface BlogStats {
 export async function getDashboardStats(): Promise<BlogStats> {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       throw new Error('Não autorizado')
     }
@@ -72,34 +72,34 @@ export async function getDashboardStats(): Promise<BlogStats> {
     ] = await Promise.all([
       // Total de posts
       prisma.post.count(),
-      
+
       // Posts publicados
       prisma.post.count({
         where: { status: 'PUBLISHED' }
       }),
-      
+
       // Posts em rascunho
       prisma.post.count({
         where: { status: 'DRAFT' }
       }),
-      
+
       // Total de categorias
       prisma.category.count(),
-      
+
       // Total de tags
       prisma.tag.count(),
-      
+
       // Total de comentários
       prisma.comment.count(),
-      
+
       // Total de usuários
       prisma.user.count(),
-      
+
       // Comentários pendentes
       prisma.comment.count({
         where: { status: 'PENDING' }
       }),
-      
+
       // Posts recentes
       prisma.post.findMany({
         take: 5,
@@ -117,10 +117,20 @@ export async function getDashboardStats(): Promise<BlogStats> {
               firstName: true,
               lastName: true,
             }
+          },
+          category: {
+            select: {
+              name: true,
+            }
+          },
+          _count: {
+            select: {
+              comments: true
+            }
           }
         }
       }),
-      
+
       // Comentários recentes
       prisma.comment.findMany({
         take: 5,
@@ -170,7 +180,7 @@ export async function getDashboardStats(): Promise<BlogStats> {
 export async function getPostsStatsByPeriod(days: number = 30) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       throw new Error('Não autorizado')
     }
@@ -204,7 +214,7 @@ export async function getPostsStatsByPeriod(days: number = 30) {
 export async function getCommentsStatsByPeriod(days: number = 30) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       throw new Error('Não autorizado')
     }
@@ -238,7 +248,7 @@ export async function getCommentsStatsByPeriod(days: number = 30) {
 export async function getPopularPosts(limit: number = 10) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       throw new Error('Não autorizado')
     }
@@ -283,7 +293,7 @@ export async function getPopularPosts(limit: number = 10) {
 export async function getPopularCategories(limit: number = 10) {
   try {
     const { userId } = await auth()
-    
+
     if (!userId) {
       throw new Error('Não autorizado')
     }

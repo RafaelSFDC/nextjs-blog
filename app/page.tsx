@@ -1,51 +1,36 @@
-"use client"
-
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
-import { CalendarDays, User, ArrowRight, MessageCircle } from 'lucide-react'
+import { CalendarDays, ArrowRight, MessageCircle } from 'lucide-react'
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
+import { searchPosts } from '@/app/actions/posts'
+import { PostStatus } from '@prisma/client'
 
-export default function Home() {
-  const [featuredPosts, setFeaturedPosts] = useState<PostWithDetails[]>([])
-  const [recentPosts, setRecentPosts] = useState<PostWithDetails[]>([])
-  const [loading, setLoading] = useState(true)
+export default async function Home() {
+  // Buscar posts em destaque e recentes em paralelo
+  const [featuredResult, recentResult] = await Promise.all([
+    searchPosts({
+      featured: true,
+      limit: 3,
+      status: PostStatus.PUBLISHED,
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    }),
+    searchPosts({
+      limit: 6,
+      status: PostStatus.PUBLISHED,
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    })
+  ])
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true)
-
-      // Buscar posts em destaque
-      const featuredResponse = await fetch('/api/posts?featured=true&limit=3&status=PUBLISHED')
-      const featuredData = await featuredResponse.json()
-
-      // Buscar posts recentes
-      const recentResponse = await fetch('/api/posts?limit=6&status=PUBLISHED&sortBy=createdAt&sortOrder=desc')
-      const recentData = await recentResponse.json()
-
-      if (featuredResponse.ok) {
-        setFeaturedPosts(featuredData.posts || [])
-      }
-
-      if (recentResponse.ok) {
-        setRecentPosts(recentData.posts || [])
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchPosts()
-  }, [])
+  const featuredPosts = featuredResult.data
+  const recentPosts = recentResult.data
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <Header />
@@ -79,11 +64,7 @@ export default function Home() {
       <section className="py-16 px-4">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Posts em Destaque</h2>
-          {loading ? (
-            <div className="text-center py-12">
-              <p>Carregando posts...</p>
-            </div>
-          ) : featuredPosts.length === 0 ? (
+          {featuredPosts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">Nenhum post em destaque encontrado</p>
               <Link href="/blog">
@@ -169,11 +150,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-background/50">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Posts Recentes</h2>
-          {loading ? (
-            <div className="text-center py-12">
-              <p>Carregando posts...</p>
-            </div>
-          ) : recentPosts.length === 0 ? (
+          {recentPosts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Nenhum post encontrado</p>
             </div>

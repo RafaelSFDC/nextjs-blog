@@ -1,22 +1,12 @@
-"use client"
-
-import { useState, useEffect } from 'react'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
-import { 
-  ArrowLeft, 
-  PlusCircle, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye,
+import {
+  ArrowLeft,
+  PlusCircle,
   Calendar,
   User,
   MessageCircle
@@ -24,69 +14,93 @@ import {
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { SearchFilters } from '@/components/search-filters'
+import { PaginationControls } from '@/components/pagination-controls'
+import { PostActionsDropdown } from '@/components/post-actions-dropdown'
+import { searchPosts } from '@/lib/actions/posts'
+import { PostStatus } from '@prisma/client'
 
-export default function PostsPage() {
-  const [posts, setPosts] = useState<PostWithDetails[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+interface PostsPageProps {
+  searchParams: Promise<{
+    query?: string
+    status?: PostStatus
+    page?: string
+    limit?: string
+  }>
+}
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-      })
-
-      if (searchQuery) {
-        params.append('query', searchQuery)
-      }
-
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter)
-      }
-
-      const response = await fetch(`/api/posts?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setPosts(data.posts)
-        setTotalPages(data.pagination.totalPages)
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-    } finally {
-      setLoading(false)
-    }
+async function PostsContent({ searchParams }: PostsPageProps) {
+  // Parse search parameters
+  const params = await searchParams
+  const filters = {
+    query: params.query,
+    status: params.status,
+    page: parseInt(params.page || '1'),
+    limit: parseInt(params.limit || '10'),
+    sortBy: 'createdAt' as const,
+    sortOrder: 'desc' as const,
   }
 
-  useEffect(() => {
-    fetchPosts()
-  }, [page, searchQuery, statusFilter])
+  // Fetch posts
+  const postsResult = await searchPosts(filters)
 
-  const handleDelete = async (postId: string) => {
-    if (!confirm('Tem certeza que deseja deletar este post?')) {
-      return
-    }
+  return (
+    <>
+      {/* Filtros */}
+      <div className="mb-6">
+        <SearchFilters
+          categories={[]}
+          showStatusFilter={true}
+          showSortOptions={true}
+        />
+      </div>
 
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: 'DELETE',
-      })
+      {/* Tabela */}
+      {postsResult.data.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Nenhum post encontrado</p>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Autor</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Comentários</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="w-[70px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {postsResult.data.map((post) => (
+                  <PostRow key={post.id} post={post} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-      if (response.ok) {
-        fetchPosts()
-      } else {
-        alert('Erro ao deletar post')
-      }
-    } catch (error) {
-      console.error('Error deleting post:', error)
-      alert('Erro ao deletar post')
-    }
-  }
+          {/* Paginação */}
+          <div className="mt-6">
+            <PaginationControls
+              currentPage={postsResult.pagination.page}
+              totalPages={postsResult.pagination.totalPages}
+              hasNext={postsResult.pagination.hasNext}
+              hasPrev={postsResult.pagination.hasPrev}
+              total={postsResult.pagination.total}
+              limit={postsResult.pagination.limit}
+            />
+          </div>
+        </>
+      )}
+    </>
+  )
+}
 
+function PostRow({ post }: { post: PostWithDetails }) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PUBLISHED':
@@ -100,6 +114,101 @@ export default function PostsPage() {
     }
   }
 
+  return (
+    <TableRow>
+      <TableCell>
+        <div>
+          <div className="font-medium">{post.title}</div>
+          {post.featured && (
+            <Badge variant="outline" className="mt-1">
+              Destaque
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        {getStatusBadge(post.status)}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">
+            {post.author.firstName} {post.author.lastName}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        {post.category ? (
+          <Badge variant="secondary">
+            {post.category.name}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <MessageCircle className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">{post._count.comments}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          <span>
+            {format(new Date(post.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <PostActionsDropdown post={post} />
+      </TableCell>
+    </TableRow>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="h-10 bg-muted rounded-md animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+        </div>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Título</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Autor</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Comentários</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead className="w-[70px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><div className="h-4 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-6 w-20 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-4 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-6 w-16 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-4 w-8 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-4 w-20 bg-muted rounded animate-pulse" /></TableCell>
+                <TableCell><div className="h-8 w-8 bg-muted rounded animate-pulse" /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
+
+export default function PostsPage({ searchParams }: PostsPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
@@ -132,163 +241,9 @@ export default function PostsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar posts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="PUBLISHED">Publicados</SelectItem>
-                  <SelectItem value="DRAFT">Rascunhos</SelectItem>
-                  <SelectItem value="ARCHIVED">Arquivados</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Tabela */}
-            {loading ? (
-              <div className="text-center py-8">
-                <p>Carregando posts...</p>
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Nenhum post encontrado</p>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Título</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Autor</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Comentários</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead className="w-[70px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {posts.map((post) => (
-                      <TableRow key={post.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{post.title}</div>
-                            {post.featured && (
-                              <Badge variant="outline" className="mt-1">
-                                Destaque
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(post.status)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {post.author.firstName} {post.author.lastName}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {post.category ? (
-                            <Badge variant="secondary">
-                              {post.category.name}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{post._count.comments}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {format(new Date(post.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/blog/${post.slug}`}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Visualizar
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/posts/${post.id}/edit`}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Editar
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(post.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Deletar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {/* Paginação */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <p className="text-sm text-muted-foreground">
-                  Página {page} de {totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page === totalPages}
-                  >
-                    Próxima
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Suspense fallback={<LoadingSkeleton />}>
+              <PostsContent searchParams={searchParams} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

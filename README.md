@@ -22,6 +22,7 @@ Um blog completo e moderno construído com Next.js 15, Prisma, Clerk e Tailwind 
 - **📊 Dashboard Principal** - Estatísticas e visão geral
 - **📝 Gerenciar Posts** - CRUD completo de posts
 - **🏷️ Gerenciar Categorias** - CRUD de categorias
+- **🏷️ Gerenciar Tags** - CRUD de tags
 - **💬 Moderar Comentários** - Aprovar/rejeitar comentários
 - **📈 Analytics** - Métricas e relatórios
 

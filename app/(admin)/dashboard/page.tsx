@@ -175,6 +175,12 @@ export default async function DashboardPage() {
                     Moderar Comentários
                   </Button>
                 </Link>
+                <Link href="/dashboard/tags">
+                  <Button variant="outline" className="w-full gap-2">
+                    <Tag className="h-4 w-4" />
+                    Gerenciar Tags
+                  </Button>
+                </Link>
                 <Link href="/dashboard/analytics">
                   <Button variant="outline" className="w-full gap-2">
                     <TrendingUp className="h-4 w-4" />

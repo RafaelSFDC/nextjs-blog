@@ -131,29 +131,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 px-4 bg-background/50">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-primary">50+</div>
-              <div className="text-sm text-muted-foreground">Posts Publicados</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-primary">10k+</div>
-              <div className="text-sm text-muted-foreground">Visualizações</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-primary">500+</div>
-              <div className="text-sm text-muted-foreground">Leitores</div>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-primary">3+</div>
-              <div className="text-sm text-muted-foreground">Anos Escrevendo</div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* About Section */}
       <section id="sobre" className="py-20 px-4">

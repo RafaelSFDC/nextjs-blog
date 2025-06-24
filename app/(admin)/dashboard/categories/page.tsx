@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { CategoryWithCount } from '@/types/blog'
 import { toast } from 'sonner'
+import { getCategories, createCategory, updateCategory, deleteCategory } from '@/app/actions/categories'
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryWithCount[]>([])
@@ -57,11 +58,8 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/categories?includeCount=true')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data)
-      }
+      const data = await getCategories(true)
+      setCategories(data)
     } catch (error) {
       console.error('Error fetching categories:', error)
       toast.error('Erro ao carregar categorias')
@@ -105,34 +103,26 @@ export default function CategoriesPage() {
     setSaving(true)
 
     try {
-      const url = editingCategory ? `/api/categories/${editingCategory.id}` : '/api/categories'
-      const method = editingCategory ? 'PUT' : 'POST'
+      const formData = new FormData()
+      formData.append('name', name.trim())
+      formData.append('slug', slug.trim())
+      formData.append('description', description.trim())
+      formData.append('color', color)
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          slug: slug.trim(),
-          description: description.trim() || undefined,
-          color: color,
-        }),
-      })
-
-      if (response.ok) {
-        toast.success(editingCategory ? 'Categoria atualizada!' : 'Categoria criada!')
-        setIsDialogOpen(false)
-        resetForm()
-        fetchCategories()
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, formData)
+        toast.success('Categoria atualizada!')
       } else {
-        const error = await response.json()
-        toast.error(error.error || 'Erro ao salvar categoria')
+        await createCategory(formData)
+        toast.success('Categoria criada!')
       }
+
+      setIsDialogOpen(false)
+      resetForm()
+      fetchCategories()
     } catch (error) {
       console.error('Error saving category:', error)
-      toast.error('Erro ao salvar categoria')
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar categoria')
     } finally {
       setSaving(false)
     }
@@ -149,20 +139,12 @@ export default function CategoriesPage() {
     }
 
     try {
-      const response = await fetch(`/api/categories/${category.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        toast.success('Categoria deletada!')
-        fetchCategories()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Erro ao deletar categoria')
-      }
+      await deleteCategory(category.id)
+      toast.success('Categoria deletada!')
+      fetchCategories()
     } catch (error) {
       console.error('Error deleting category:', error)
-      toast.error('Erro ao deletar categoria')
+      toast.error(error instanceof Error ? error.message : 'Erro ao deletar categoria')
     }
   }
 

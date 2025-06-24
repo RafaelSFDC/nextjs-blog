@@ -1,63 +1,20 @@
-"use client"
-
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { 
-  ArrowLeft, 
-  FileText, 
-  Users, 
-  MessageCircle, 
+import {
+  ArrowLeft,
+  FileText,
+  Users,
+  MessageCircle,
   TrendingUp,
   Tag,
   Calendar,
   Eye
 } from 'lucide-react'
-import { BlogStats } from '@/types/blog'
-import { toast } from 'sonner'
+import { getBlogStats } from '@/app/actions/dashboard'
 
-export default function AnalyticsPage() {
-  const [stats, setStats] = useState<BlogStats | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/dashboard/stats')
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      } else {
-        toast.error('Erro ao carregar estatísticas')
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-      toast.error('Erro ao carregar estatísticas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchStats()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
-        <p>Carregando estatísticas...</p>
-      </div>
-    )
-  }
-
-  if (!stats) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
-        <p>Erro ao carregar estatísticas</p>
-      </div>
-    )
-  }
+export default async function AnalyticsPage() {
+  const stats = await getBlogStats()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -143,7 +100,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.recentPosts.map((post) => (
+                {stats.recentPosts.map((post: any) => (
                   <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <h3 className="font-medium mb-1 line-clamp-1">
@@ -192,7 +149,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.recentComments.map((comment) => (
+                {stats.recentComments.map((comment: any) => (
                   <div key={comment.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">

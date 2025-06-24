@@ -176,6 +176,9 @@ export async function getDashboardStats(): Promise<BlogStats> {
   }
 }
 
+// Alias para compatibilidade
+export const getBlogStats = getDashboardStats
+
 // Função auxiliar para buscar estatísticas de posts por período
 export async function getPostsStatsByPeriod(days: number = 30) {
   try {

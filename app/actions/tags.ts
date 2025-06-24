@@ -32,6 +32,35 @@ export async function getTags(includeCount: boolean = false) {
   }
 }
 
+// GET /api/tags/slug/[slug] - Buscar tag por slug
+export async function getTagBySlug(slug: string) {
+  try {
+    const tag = await prisma.tag.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: {
+            posts: {
+              where: {
+                status: 'PUBLISHED'
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!tag) {
+      throw new Error('Tag não encontrada')
+    }
+
+    return tag
+  } catch (error) {
+    console.error('Error fetching tag:', error)
+    throw new Error('Erro ao buscar tag')
+  }
+}
+
 // GET /api/tags/[id] - Buscar tag por ID
 export async function getTagById(id: string) {
   try {

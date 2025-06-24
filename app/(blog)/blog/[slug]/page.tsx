@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
+import Image from 'next/image'
 import { CalendarDays, ArrowLeft, Share2, Heart, MessageCircle } from 'lucide-react'
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
@@ -60,18 +61,23 @@ function PostContent({
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               {post.category && (
-                <Badge
-                  variant="secondary"
-                  style={{ backgroundColor: (post.category.color || '#6366f1') + '20', color: post.category.color || '#6366f1' }}
-                >
-                  {post.category.name}
-                </Badge>
+                <Link href={`/category/${post.category.slug}`}>
+                  <Badge
+                    variant="secondary"
+                    className="hover:opacity-80 transition-opacity cursor-pointer"
+                    style={{ backgroundColor: (post.category.color || '#6366f1') + '20', color: post.category.color || '#6366f1' }}
+                  >
+                    {post.category.name}
+                  </Badge>
+                </Link>
               )}
               {post.featured && <Badge variant="default">Destaque</Badge>}
               {post.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag.id} variant="outline">
-                  {tag.name}
-                </Badge>
+                <Link key={tag.id} href={`/tag/${tag.slug}`}>
+                  <Badge variant="outline" className="hover:bg-muted transition-colors cursor-pointer">
+                    {tag.name}
+                  </Badge>
+                </Link>
               ))}
             </div>
             <h1 className="text-4xl font-bold mb-4">
@@ -144,11 +150,13 @@ function PostContent({
                     <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`}>
                       <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                         {relatedPost.coverImage && (
-                          <div className="aspect-video overflow-hidden rounded-t-lg">
-                            <img
+                          <div className="aspect-video overflow-hidden rounded-t-lg relative">
+                            <Image
                               src={relatedPost.coverImage}
                               alt={relatedPost.title}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, 50vw"
                             />
                           </div>
                         )}

@@ -65,6 +65,35 @@ export async function getCategoryById(id: string) {
   }
 }
 
+// GET /api/categories/slug/[slug] - Buscar categoria por slug
+export async function getCategoryBySlug(slug: string) {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: {
+            posts: {
+              where: {
+                status: 'PUBLISHED'
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!category) {
+      throw new Error('Categoria não encontrada')
+    }
+
+    return category
+  } catch (error) {
+    console.error('Error fetching category:', error)
+    throw new Error('Erro ao buscar categoria')
+  }
+}
+
 // POST /api/categories - Criar nova categoria
 export async function createCategory(formData: FormData) {
   try {

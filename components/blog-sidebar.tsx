@@ -33,24 +33,22 @@ export function BlogSidebar({ categories }: BlogSidebarProps) {
         </CardHeader>
         <CardContent className="space-y-3">
           {topCategories.map((category) => (
-            <div
-              key={category.id}
-              className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-              onClick={() => setCategory(category.id)}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: category.color || '#6366f1' }}
-                />
-                <span className="font-medium">{category.name}</span>
+            <Link key={category.id} href={`/category/${category.slug}`}>
+              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: category.color || '#6366f1' }}
+                  />
+                  <span className="font-medium">{category.name}</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {category._count.posts}
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {category._count.posts}
-              </Badge>
-            </div>
+            </Link>
           ))}
-          
+
           {categories.length > 6 && (
             <Link href="/blog?categoryId=all">
               <Button variant="outline" size="sm" className="w-full mt-3">
@@ -79,7 +77,7 @@ export function BlogSidebar({ categories }: BlogSidebarProps) {
               {categories.reduce((total, cat) => total + cat._count.posts, 0)}
             </Badge>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Tag className="h-4 w-4 text-muted-foreground" />
@@ -114,7 +112,7 @@ export function BlogSidebar({ categories }: BlogSidebarProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Compartilho conhecimento sobre desenvolvimento web, tecnologia e experiências 
+            Compartilho conhecimento sobre desenvolvimento web, tecnologia e experiências
             pessoais na área de programação.
           </p>
           <Link href="/#sobre">

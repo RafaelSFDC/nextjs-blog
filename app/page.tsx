@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
+import Image from 'next/image'
 import { CalendarDays, ArrowRight, MessageCircle, Code2, Laptop, Coffee, BookOpen, Github, Linkedin, Mail, Download, ExternalLink, Heart, Star, Users, TrendingUp } from 'lucide-react'
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
@@ -14,6 +15,40 @@ import { searchPosts } from '@/app/actions/posts'
 import { PostStatus } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'Meu Blog - Desenvolvedor & Escritor',
+  description: 'Blog pessoal sobre desenvolvimento web, tecnologia e carreira. Compartilhando conhecimento e experiências em programação, Next.js, React e muito mais.',
+  keywords: ['desenvolvimento web', 'programação', 'Next.js', 'React', 'TypeScript', 'blog', 'tecnologia'],
+  authors: [{ name: 'Seu Nome' }],
+  creator: 'Seu Nome',
+  publisher: 'Meu Blog',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: '/',
+    title: 'Meu Blog - Desenvolvedor & Escritor',
+    description: 'Blog pessoal sobre desenvolvimento web, tecnologia e carreira.',
+    siteName: 'Meu Blog',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Meu Blog - Desenvolvedor & Escritor',
+    description: 'Blog pessoal sobre desenvolvimento web, tecnologia e carreira.',
+    creator: '@seutwitter',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
 
 export default async function Home() {
   // Buscar posts em destaque e recentes em paralelo
@@ -298,11 +333,13 @@ export default async function Home() {
                 <Link key={post.id} href={`/blog/${post.slug}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                     {post.coverImage && (
-                      <div className="aspect-video overflow-hidden rounded-t-lg">
-                        <img
+                      <div className="aspect-video overflow-hidden rounded-t-lg relative">
+                        <Image
                           src={post.coverImage}
                           alt={post.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                       </div>
                     )}

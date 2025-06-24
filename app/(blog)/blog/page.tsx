@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Calendar, User, MessageCircle, Search, Clock, Eye } from 'lucide-react'
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
@@ -15,6 +16,24 @@ import { BlogSidebar } from '@/components/blog-sidebar'
 import { searchPosts } from '@/app/actions/posts'
 import { getCategories } from '@/app/actions/categories'
 import { PostStatus } from '@prisma/client'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Blog | Meu Blog',
+  description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira. Conteúdo atualizado regularmente sobre programação, Next.js, React e muito mais.',
+  keywords: ['blog', 'desenvolvimento web', 'programação', 'artigos', 'tecnologia', 'Next.js', 'React'],
+  openGraph: {
+    title: 'Blog | Meu Blog',
+    description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira.',
+    type: 'website',
+    url: '/blog',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog | Meu Blog',
+    description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira.',
+  },
+}
 
 interface BlogPageProps {
   searchParams: Promise<{
@@ -124,10 +143,12 @@ function PostCard({ post }: { post: PostWithDetails }) {
       <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-0 shadow-md hover:scale-[1.02]">
         {post.coverImage && (
           <div className="aspect-video overflow-hidden rounded-t-lg relative">
-            <img
+            <Image
               src={post.coverImage}
               alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
@@ -135,17 +156,19 @@ function PostCard({ post }: { post: PostWithDetails }) {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {post.category && (
-              <Badge
-                variant="secondary"
-                className="font-medium"
-                style={{
-                  backgroundColor: (post.category.color || '#6366f1') + '20',
-                  color: post.category.color || '#6366f1',
-                  borderColor: (post.category.color || '#6366f1') + '30'
-                }}
-              >
-                {post.category.name}
-              </Badge>
+              <Link href={`/category/${post.category.slug}`} onClick={(e) => e.stopPropagation()}>
+                <Badge
+                  variant="secondary"
+                  className="font-medium hover:opacity-80 transition-opacity cursor-pointer"
+                  style={{
+                    backgroundColor: (post.category.color || '#6366f1') + '20',
+                    color: post.category.color || '#6366f1',
+                    borderColor: (post.category.color || '#6366f1') + '30'
+                  }}
+                >
+                  {post.category.name}
+                </Badge>
+              </Link>
             )}
             {post.featured && (
               <Badge variant="default" className="bg-gradient-to-r from-primary to-primary/80">
@@ -167,9 +190,11 @@ function PostCard({ post }: { post: PostWithDetails }) {
           {post.tags.length > 0 && (
             <div className="flex items-center gap-1 mb-4 flex-wrap">
               {post.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag.id} variant="outline" className="text-xs px-2 py-1">
-                  #{tag.name}
-                </Badge>
+                <Link key={tag.id} href={`/tag/${tag.slug}`} onClick={(e) => e.stopPropagation()}>
+                  <Badge variant="outline" className="text-xs px-2 py-1 hover:bg-muted transition-colors cursor-pointer">
+                    #{tag.name}
+                  </Badge>
+                </Link>
               ))}
               {post.tags.length > 3 && (
                 <Badge variant="outline" className="text-xs px-2 py-1">

@@ -1,13 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { ScrollToTop } from '@/components/scroll-to-top'
 import Link from 'next/link'
-import { Github, Linkedin, Mail, Twitter, Heart, Code2, ArrowUp } from 'lucide-react'
+import { Github, Linkedin, Mail, Twitter, Heart, Code2 } from 'lucide-react'
 
 export function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
 
   return (
     <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mt-16">
@@ -114,9 +112,9 @@ export function Footer() {
               Receba os últimos posts diretamente no seu email.
             </p>
             <div className="space-y-2">
-              <Input 
-                type="email" 
-                placeholder="Seu email" 
+              <Input
+                type="email"
+                placeholder="Seu email"
                 className="h-8 text-sm"
               />
               <Button size="sm" className="w-full">
@@ -138,7 +136,7 @@ export function Footer() {
             <Heart className="h-3 w-3 text-red-500 fill-current" />
             <span>usando Next.js, Prisma e Clerk.</span>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacidade
@@ -146,15 +144,7 @@ export function Footer() {
             <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Termos
             </Link>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={scrollToTop}
-            >
-              <ArrowUp className="h-4 w-4" />
-              <span className="sr-only">Voltar ao topo</span>
-            </Button>
+            <ScrollToTop />
           </div>
         </div>
       </div>

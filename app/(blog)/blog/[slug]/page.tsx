@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
+import { Header } from '@/components/header'
 
 export default function PostPage() {
   const params = useParams()
@@ -22,7 +23,9 @@ export default function PostPage() {
   const slug = params.slug as string
 
   const [post, setPost] = useState<PostWithDetails | null>(null)
+  const [relatedPosts, setRelatedPosts] = useState<PostWithDetails[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingRelated, setLoadingRelated] = useState(false)
   const [commentContent, setCommentContent] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
 
@@ -33,6 +36,8 @@ export default function PostPage() {
       if (response.ok) {
         const data = await response.json()
         setPost(data)
+        // Buscar posts relacionados após carregar o post
+        fetchRelatedPosts(data.id)
       } else {
         toast.error('Post não encontrado')
       }
@@ -41,6 +46,21 @@ export default function PostPage() {
       toast.error('Erro ao carregar post')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchRelatedPosts = async (postId: string) => {
+    try {
+      setLoadingRelated(true)
+      const response = await fetch(`/api/posts/${postId}/related?limit=4`)
+      if (response.ok) {
+        const data = await response.json()
+        setRelatedPosts(data.posts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching related posts:', error)
+    } finally {
+      setLoadingRelated(false)
     }
   }
 
@@ -114,25 +134,7 @@ export default function PostPage() {
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold">Blog</h1>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            <Link href="/blog">
-              <Button variant="ghost">Posts</Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
-            </Link>
-            <Link href="/sign-in">
-              <Button>Entrar</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Back Button */}
@@ -216,6 +218,91 @@ export default function PostPage() {
             <div dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }} />
           </div>
         </article>
+
+        {/* Related Posts Section */}
+        {relatedPosts.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Posts Relacionados
+              </CardTitle>
+              <CardDescription>
+                Outros posts que podem interessar você
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingRelated ? (
+                <div className="text-center py-8">
+                  <p>Carregando posts relacionados...</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {relatedPosts.map((relatedPost) => (
+                    <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`}>
+                      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                        {relatedPost.coverImage && (
+                          <div className="aspect-video overflow-hidden rounded-t-lg">
+                            <img
+                              src={relatedPost.coverImage}
+                              alt={relatedPost.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <CardHeader>
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            {relatedPost.category && (
+                              <Badge
+                                variant="secondary"
+                                style={{ backgroundColor: (relatedPost.category.color || '#6366f1') + '20', color: relatedPost.category.color || '#6366f1' }}
+                              >
+                                {relatedPost.category.name}
+                              </Badge>
+                            )}
+                            {relatedPost.featured && <Badge variant="default">Destaque</Badge>}
+                          </div>
+                          <CardTitle className="line-clamp-2 text-lg">
+                            {relatedPost.title}
+                          </CardTitle>
+                          {relatedPost.excerpt && (
+                            <CardDescription className="line-clamp-2">
+                              {relatedPost.excerpt}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={relatedPost.author.imageUrl || undefined} />
+                                <AvatarFallback className="text-xs">
+                                  {relatedPost.author.firstName?.[0]}{relatedPost.author.lastName?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm text-muted-foreground">
+                                {relatedPost.author.firstName} {relatedPost.author.lastName}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <CalendarDays className="h-4 w-4" />
+                                <span>{format(new Date(relatedPost.createdAt), 'dd MMM', { locale: ptBR })}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MessageCircle className="h-4 w-4" />
+                                <span>{relatedPost._count.comments}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Comments Section */}
         <Card>

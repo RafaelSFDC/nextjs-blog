@@ -11,6 +11,7 @@ import { Search, Calendar, User, MessageCircle } from 'lucide-react'
 import { PostWithDetails, CategoryWithCount } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { Header } from '@/components/header'
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<PostWithDetails[]>([])
@@ -72,25 +73,7 @@ export default function BlogPage() {
   }, [page, searchQuery, categoryFilter])
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold">Blog</h1>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            <Link href="/blog">
-              <Button variant="ghost">Posts</Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
-            </Link>
-            <Link href="/sign-in">
-              <Button>Entrar</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
         {/* Search and Filters */}

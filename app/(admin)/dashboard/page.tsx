@@ -12,6 +12,7 @@ import {
   Calendar,
   Tag
 } from 'lucide-react'
+import { Footer } from '@/components/footer'
 import { getDashboardStats } from '@/app/actions/dashboard'
 
 export const dynamic = 'force-dynamic'
@@ -228,12 +229,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-8 mt-16">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 Blog. Construído com Next.js, Prisma e Clerk.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

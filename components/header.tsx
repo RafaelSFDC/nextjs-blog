@@ -11,34 +11,84 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ModeToggle } from '@/components/mode-toggle'
+import { MobileMenu } from '@/components/mobile-menu'
 import Link from 'next/link'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { User, Settings, LogOut, PenTool } from 'lucide-react'
+import { User, Settings, LogOut, PenTool, Github, Linkedin, Mail, Code2 } from 'lucide-react'
 
 export function Header() {
   const { user, isSignedIn } = useUser()
   const { signOut } = useClerk()
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-bold">Blog</h1>
+        {/* Logo/Brand */}
+        <Link href="/" className="flex items-center space-x-3 group">
+          <div className="relative">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+              <Code2 className="h-5 w-5 text-primary-foreground" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Meu Blog
+            </h1>
+            <span className="text-xs text-muted-foreground hidden sm:block">
+              Desenvolvedor & Escritor
+            </span>
+          </div>
         </Link>
-        
-        <nav className="flex items-center space-x-4">
-          <Link href="/blog">
-            <Button variant="ghost">Posts</Button>
+
+        {/* Navigation */}
+        <nav className="hidden md:flex items-center space-x-1">
+          <Link href="/">
+            <Button variant="ghost" className="hover:bg-accent/50">Início</Button>
           </Link>
-          
+          <Link href="/blog">
+            <Button variant="ghost" className="hover:bg-accent/50">Posts</Button>
+          </Link>
+          <Link href="/#sobre">
+            <Button variant="ghost" className="hover:bg-accent/50">Sobre</Button>
+          </Link>
+          <Link href="/#contato">
+            <Button variant="ghost" className="hover:bg-accent/50">Contato</Button>
+          </Link>
+        </nav>
+
+        {/* Right side actions */}
+        <div className="flex items-center space-x-2">
+          {/* Social Links */}
+          <div className="hidden sm:flex items-center space-x-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                <Github className="h-4 w-4" />
+                <span className="sr-only">GitHub</span>
+              </a>
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+                <Linkedin className="h-4 w-4" />
+                <span className="sr-only">LinkedIn</span>
+              </a>
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+              <a href="mailto:contato@exemplo.com">
+                <Mail className="h-4 w-4" />
+                <span className="sr-only">Email</span>
+              </a>
+            </Button>
+          </div>
+
           {isSignedIn && (
             <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
+              <Button variant="ghost" className="hidden sm:flex">Dashboard</Button>
             </Link>
           )}
-          
+
           <ModeToggle />
-          
+          <MobileMenu />
+
           {isSignedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -95,7 +145,7 @@ export function Header() {
               </Link>
             </div>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   )

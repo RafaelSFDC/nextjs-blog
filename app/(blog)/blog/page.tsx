@@ -7,6 +7,7 @@ import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 import { SearchFilters } from '@/components/search-filters'
 import { PaginationControls } from '@/components/pagination-controls'
 import { searchPosts } from '@/app/actions/posts'
@@ -190,12 +191,7 @@ export default function BlogPage({ searchParams }: BlogPageProps) {
         </Suspense>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-8 mt-16">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 Blog. Construído com Next.js, Prisma e Clerk.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

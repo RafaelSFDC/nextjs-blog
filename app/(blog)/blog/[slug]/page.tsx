@@ -9,6 +9,7 @@ import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 import { getPostBySlug, getRelatedPosts } from '@/app/actions/posts'
 import { notFound } from 'next/navigation'
 import { CommentSection } from './comment-section'
@@ -209,12 +210,7 @@ function PostContent({
         <CommentSection post={post} />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-8 mt-16">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 Blog. Construído com Next.js, Prisma e Clerk.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

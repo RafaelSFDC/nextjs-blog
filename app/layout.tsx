@@ -16,8 +16,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Blog - Next.js",
-  description: "Um blog moderno construído com Next.js, Prisma e Clerk",
+  title: "Meu Blog - Desenvolvedor & Escritor",
+  description: "Blog pessoal sobre desenvolvimento web, tecnologia e carreira. Compartilhando conhecimento e experiências em programação.",
+  keywords: ["blog", "desenvolvimento", "programação", "tecnologia", "carreira", "next.js", "react", "typescript"],
+  authors: [{ name: "Seu Nome" }],
+  creator: "Seu Nome",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "https://seublog.com",
+    title: "Meu Blog - Desenvolvedor & Escritor",
+    description: "Blog pessoal sobre desenvolvimento web, tecnologia e carreira.",
+    siteName: "Meu Blog",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Meu Blog - Desenvolvedor & Escritor",
+    description: "Blog pessoal sobre desenvolvimento web, tecnologia e carreira.",
+    creator: "@seutwitter",
+  },
 };
 
 export default function RootLayout({

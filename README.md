@@ -1,36 +1,193 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blog Moderno com Next.js
 
-## Getting Started
+Um blog completo e moderno construído com Next.js 15, Prisma, Clerk e Tailwind CSS.
 
-First, run the development server:
+## 🚀 Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### ✅ **Funcionalidades Implementadas:**
+
+- **🏠 Homepage** - Landing page atrativa
+- **📝 Blog** - Listagem de posts com filtros e paginação
+- **📖 Posts Individuais** - Visualização completa de posts com comentários
+- **🔐 Autenticação** - Sistema completo com Clerk (login/registro)
+- **👨‍💼 Dashboard Admin** - Painel administrativo completo
+- **📊 Analytics** - Estatísticas do blog
+- **💬 Sistema de Comentários** - Comentários com moderação
+- **🏷️ Categorias e Tags** - Organização de conteúdo
+- **🎨 Design Responsivo** - Interface moderna com Shadcn/ui
+- **🌙 Dark/Light Mode** - Tema claro e escuro
+
+### 📋 **Páginas do Dashboard:**
+
+- **📊 Dashboard Principal** - Estatísticas e visão geral
+- **📝 Gerenciar Posts** - CRUD completo de posts
+- **🏷️ Gerenciar Categorias** - CRUD de categorias
+- **💬 Moderar Comentários** - Aprovar/rejeitar comentários
+- **📈 Analytics** - Métricas e relatórios
+
+### 🔧 **APIs Implementadas:**
+
+- **Posts** - CRUD completo com filtros e busca
+- **Categorias** - CRUD completo
+- **Tags** - CRUD completo
+- **Comentários** - CRUD com moderação
+- **Usuários** - Sincronização com Clerk
+- **Dashboard** - Estatísticas e métricas
+
+## 🛠️ Tecnologias
+
+- **[Next.js 15](https://nextjs.org/)** - Framework React
+- **[Prisma](https://prisma.io/)** - ORM TypeScript
+- **[Clerk](https://clerk.com/)** - Autenticação
+- **[Neon](https://neon.tech/)** - Banco PostgreSQL
+- **[Tailwind CSS](https://tailwindcss.com/)** - Styling
+- **[Shadcn/ui](https://ui.shadcn.com/)** - Componentes UI
+- **[TypeScript](https://typescriptlang.org/)** - Type Safety
+- **[Sonner](https://sonner.emilkowal.ski/)** - Toast notifications
+
+## 📦 Instalação
+
+1. **Clone o repositório:**
+   ```bash
+   git clone <repository-url>
+   cd nextjs-blog
+   ```
+
+2. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure as variáveis de ambiente:**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. **Configure o banco de dados:**
+   ```bash
+   npm run db:push
+   npm run db:generate
+   ```
+
+5. **Popule o banco com dados de exemplo:**
+   ```bash
+   npm run db:seed
+   ```
+
+6. **Execute o projeto:**
+   ```bash
+   npm run dev
+   ```
+
+## ⚙️ Configuração
+
+### 🗄️ Banco de Dados (Neon)
+
+1. Crie uma conta no [Neon](https://neon.tech/)
+2. Crie um novo projeto
+3. Copie a URL de conexão para `.env.local`:
+   ```env
+   DATABASE_URL="postgresql://..."
+   ```
+
+### 🔐 Autenticação (Clerk)
+
+1. Crie uma conta no [Clerk](https://clerk.com/)
+2. Crie uma nova aplicação
+3. Configure as variáveis no `.env.local`:
+   ```env
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+   CLERK_SECRET_KEY=sk_test_...
+   CLERK_WEBHOOK_SECRET=whsec_...
+   ```
+
+4. **Configure o webhook no Clerk:**
+   - URL: `https://seu-dominio.com/api/webhooks/clerk`
+   - Eventos: `user.created`, `user.updated`, `user.deleted`
+
+## 📁 Estrutura do Projeto
+
+```
+├── app/
+│   ├── (admin)/dashboard/          # Páginas do dashboard
+│   ├── (auth)/                     # Páginas de autenticação
+│   ├── (blog)/blog/                # Páginas do blog
+│   ├── api/                        # Rotas da API
+│   └── globals.css                 # Estilos globais
+├── components/
+│   ├── ui/                         # Componentes Shadcn/ui
+│   └── theme-provider.tsx          # Provider de tema
+├── lib/
+│   ├── prisma.ts                   # Cliente Prisma
+│   ├── utils.ts                    # Utilitários
+│   └── validations/                # Schemas de validação
+├── prisma/
+│   └── schema.prisma               # Schema do banco
+├── scripts/
+│   └── seed.ts                     # Script de seed
+└── types/
+    └── blog.ts                     # Types TypeScript
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎯 Como Usar
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👤 **Como Usuário:**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Navegar pelo blog** - Visualize posts na página `/blog`
+2. **Ler posts** - Clique em qualquer post para ler
+3. **Comentar** - Faça login e deixe comentários
+4. **Filtrar** - Use categorias e busca para encontrar conteúdo
 
-## Learn More
+### 👨‍💼 **Como Admin:**
 
-To learn more about Next.js, take a look at the following resources:
+1. **Acesse o dashboard** - Vá para `/dashboard`
+2. **Crie posts** - Use o editor para criar conteúdo
+3. **Gerencie categorias** - Organize o conteúdo
+4. **Modere comentários** - Aprove ou rejeite comentários
+5. **Veja analytics** - Acompanhe métricas do blog
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Vercel (Recomendado)
 
-## Deploy on Vercel
+1. **Conecte seu repositório** no Vercel
+2. **Configure as variáveis de ambiente**
+3. **Deploy automático** a cada push
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Outras plataformas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O projeto é compatível com qualquer plataforma que suporte Next.js:
+- Netlify
+- Railway
+- Render
+- AWS
+- Google Cloud
+
+## 📝 Scripts Disponíveis
+
+```bash
+npm run dev          # Desenvolvimento
+npm run build        # Build de produção
+npm run start        # Servidor de produção
+npm run lint         # Linting
+npm run db:push      # Aplicar schema ao banco
+npm run db:generate  # Gerar cliente Prisma
+npm run db:seed      # Popular banco com dados
+npm run db:studio    # Abrir Prisma Studio
+```
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+
+---
+
+**Desenvolvido com ❤️ usando Next.js, Prisma e Clerk**

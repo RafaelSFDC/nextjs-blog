@@ -1,19 +1,48 @@
+"use client"
+
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { 
-  PlusCircle, 
-  FileText, 
-  Users, 
-  MessageCircle, 
+import {
+  PlusCircle,
+  FileText,
+  Users,
+  MessageCircle,
   TrendingUp,
   Eye,
   Calendar,
   Tag
 } from 'lucide-react'
+import { BlogStats } from '@/types/blog'
+import { toast } from 'sonner'
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<BlogStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/dashboard/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      } else {
+        toast.error('Erro ao carregar estatísticas')
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+      toast.error('Erro ao carregar estatísticas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
@@ -38,16 +67,21 @@ export default function DashboardPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {loading ? (
+          <div className="text-center py-8">
+            <p>Carregando estatísticas...</p>
+          </div>
+        ) : stats ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Posts</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              <div className="text-2xl font-bold">{stats.totalPosts}</div>
               <p className="text-xs text-muted-foreground">
-                +2 desde o mês passado
+                {stats.totalPublishedPosts} publicados, {stats.totalDraftPosts} rascunhos
               </p>
             </CardContent>
           </Card>
@@ -71,9 +105,9 @@ export default function DashboardPage() {
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">89</div>
+              <div className="text-2xl font-bold">{stats.totalComments}</div>
               <p className="text-xs text-muted-foreground">
-                +7 novos hoje
+                {stats.pendingComments} pendentes de moderação
               </p>
             </CardContent>
           </Card>
@@ -84,13 +118,18 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">45</div>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
               <p className="text-xs text-muted-foreground">
-                +3 novos usuários
+                Usuários registrados
               </p>
             </CardContent>
           </Card>
         </div>
+        ) : (
+          <div className="text-center py-8">
+            <p>Erro ao carregar estatísticas</p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Recent Posts */}
@@ -108,32 +147,39 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  {stats && stats.recentPosts.map((post) => (
+                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
-                        <h3 className="font-medium mb-1">
-                          Como construir um blog moderno com Next.js {i}
+                        <h3 className="font-medium mb-1 line-clamp-1">
+                          {post.title}
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            <span>24 Jun 2025</span>
+                            <span>{new Date(post.createdAt).toLocaleDateString('pt-BR')}</span>
                           </div>
-                          <Badge variant={i === 1 ? "default" : "secondary"}>
-                            {i === 1 ? "Publicado" : "Rascunho"}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <MessageCircle className="h-3 w-3" />
+                            <span>{post._count.comments}</span>
+                          </div>
+                          {post.category && (
+                            <div className="flex items-center gap-1">
+                              <Tag className="h-3 w-3" />
+                              <span>{post.category.name}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          Editar
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          Ver
-                        </Button>
-                      </div>
+                      <Badge variant={post.status === 'PUBLISHED' ? "default" : "secondary"}>
+                        {post.status === 'PUBLISHED' ? "Publicado" : "Rascunho"}
+                      </Badge>
                     </div>
                   ))}
+                  {(!stats || stats.recentPosts.length === 0) && (
+                    <p className="text-center text-muted-foreground py-4">
+                      Nenhum post encontrado
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -180,19 +226,30 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="p-3 border rounded-lg">
+                  {stats && stats.recentComments.map((comment) => (
+                    <div key={comment.id} className="p-3 border rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">João Silva</span>
+                        <span className="text-sm font-medium">
+                          {comment.author.firstName} {comment.author.lastName}
+                        </span>
                         <Badge variant="outline" className="text-xs">
-                          Pendente
+                          {comment.status === 'PENDING' ? 'Pendente' :
+                           comment.status === 'APPROVED' ? 'Aprovado' : 'Rejeitado'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Excelente tutorial! Muito bem explicado...
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        {comment.content}
                       </p>
+                      <div className="text-xs text-muted-foreground">
+                        em: {comment.post.title}
+                      </div>
                     </div>
                   ))}
+                  {(!stats || stats.recentComments.length === 0) && (
+                    <p className="text-center text-muted-foreground py-4">
+                      Nenhum comentário encontrado
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

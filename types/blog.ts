@@ -69,6 +69,40 @@ export interface BlogStats {
   totalTags: number
   totalComments: number
   totalUsers: number
+  pendingComments: number
+  recentPosts: Array<{
+    id: string
+    title: string
+    status: string
+    createdAt: string
+    author: {
+      firstName: string | null
+      lastName: string | null
+    }
+    category: {
+      name: string
+    } | null
+    _count: {
+      comments: number
+    }
+  }>
+  recentComments: Array<{
+    id: string
+    content: string
+    status: string
+    createdAt: string
+    author: {
+      firstName: string | null
+      lastName: string | null
+    }
+    post: {
+      title: string
+    }
+  }>
+  monthlyData: Array<{
+    month: string
+    posts: number
+  }>
 }
 
 export interface SearchFilters {

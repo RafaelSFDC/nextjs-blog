@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,12 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ArrowLeft, Save, Eye, Upload, X } from 'lucide-react'
-import { Category, Tag } from '@/types/blog'
+import { PostWithDetails, Category, Tag } from '@/types/blog'
 import { toast } from 'sonner'
 
-export default function NewPostPage() {
+export default function EditPostPage() {
+  const params = useParams()
   const router = useRouter()
+  const postId = params.id as string
 
+  const [post, setPost] = useState<PostWithDetails | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,8 +51,35 @@ export default function NewPostPage() {
 
   const handleTitleChange = (value: string) => {
     setTitle(value)
-    if (!slug || slug === generateSlug(title)) {
+    if (!slug || slug === generateSlug(post?.title || '')) {
       setSlug(generateSlug(value))
+    }
+  }
+
+  const fetchPost = async () => {
+    try {
+      const response = await fetch(`/api/posts/${postId}`)
+      if (response.ok) {
+        const postData = await response.json()
+        setPost(postData)
+        
+        // Preencher formulário
+        setTitle(postData.title)
+        setSlug(postData.slug)
+        setExcerpt(postData.excerpt || '')
+        setContent(postData.content)
+        setCoverImage(postData.coverImage || '')
+        setFeatured(postData.featured)
+        setStatus(postData.status)
+        setCategoryId(postData.categoryId || '')
+        setSelectedTags(postData.tags.map((tag: Tag) => tag.id))
+      } else {
+        toast.error('Post não encontrado')
+        router.push('/dashboard/posts')
+      }
+    } catch (error) {
+      console.error('Error fetching post:', error)
+      toast.error('Erro ao carregar post')
     }
   }
 
@@ -80,12 +110,16 @@ export default function NewPostPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await Promise.all([fetchCategories(), fetchTags()])
+      await Promise.all([
+        fetchPost(),
+        fetchCategories(),
+        fetchTags()
+      ])
       setLoading(false)
     }
 
     loadData()
-  }, [])
+  }, [postId])
 
   const handleSave = async () => {
     if (!title.trim() || !slug.trim() || !content.trim()) {
@@ -96,8 +130,8 @@ export default function NewPostPage() {
     setSaving(true)
 
     try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -115,23 +149,23 @@ export default function NewPostPage() {
       })
 
       if (response.ok) {
-        toast.success('Post criado com sucesso!')
+        toast.success('Post atualizado com sucesso!')
         router.push('/dashboard/posts')
       } else {
         const error = await response.json()
-        toast.error(error.error || 'Erro ao criar post')
+        toast.error(error.error || 'Erro ao atualizar post')
       }
     } catch (error) {
-      console.error('Error creating post:', error)
-      toast.error('Erro ao criar post')
+      console.error('Error updating post:', error)
+      toast.error('Erro ao atualizar post')
     } finally {
       setSaving(false)
     }
   }
 
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tagId)
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     )
@@ -145,27 +179,37 @@ export default function NewPostPage() {
     )
   }
 
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <p>Post não encontrado</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/dashboard/posts">
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Dashboard
+                Posts
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold">Novo Post</h1>
+            <h1 className="text-2xl font-bold">Editar Post</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2" disabled>
-              <Eye className="h-4 w-4" />
-              Visualizar
+            <Button variant="outline" className="gap-2" asChild>
+              <Link href={`/blog/${post.slug}`}>
+                <Eye className="h-4 w-4" />
+                Visualizar
+              </Link>
             </Button>
-            <Button
-              className="gap-2"
+            <Button 
+              className="gap-2" 
               onClick={handleSave}
               disabled={saving}
             >
@@ -236,30 +280,6 @@ export default function NewPostPage() {
                   rows={20}
                   className="min-h-[400px]"
                 />
-              </CardContent>
-            </Card>
-
-            {/* Cover Image */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Imagem de Capa</CardTitle>
-                <CardDescription>
-                  Adicione uma imagem de capa para o post
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-2">
-                    Clique para fazer upload ou arraste uma imagem
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    PNG, JPG ou WEBP (máx. 2MB)
-                  </p>
-                  <Button variant="outline" className="mt-4">
-                    Selecionar Arquivo
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -351,8 +371,8 @@ export default function NewPostPage() {
                       return tag ? (
                         <Badge key={tagId} variant="secondary" className="gap-1">
                           {tag.name}
-                          <X
-                            className="h-3 w-3 cursor-pointer"
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
                             onClick={() => toggleTag(tagId)}
                           />
                         </Badge>
@@ -372,33 +392,6 @@ export default function NewPostPage() {
                       </Button>
                     ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card>
-              <CardHeader>
-                <CardTitle>SEO</CardTitle>
-                <CardDescription>
-                  Otimização para mecanismos de busca
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="meta-title">Meta Título</Label>
-                  <Input
-                    id="meta-title"
-                    placeholder="Título para SEO..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="meta-description">Meta Descrição</Label>
-                  <Textarea
-                    id="meta-description"
-                    placeholder="Descrição para SEO..."
-                    rows={3}
-                  />
                 </div>
               </CardContent>
             </Card>

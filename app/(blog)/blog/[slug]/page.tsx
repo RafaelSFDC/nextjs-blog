@@ -1,18 +1,117 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { CalendarDays, User, ArrowLeft, Share2, Heart, MessageCircle } from 'lucide-react'
+import { CalendarDays, User, ArrowLeft, Share2, Heart, MessageCircle, Send } from 'lucide-react'
+import { PostWithDetails } from '@/types/blog'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { useUser } from '@clerk/nextjs'
+import { toast } from 'sonner'
 
-interface PostPageProps {
-  params: {
-    slug: string
+export default function PostPage() {
+  const params = useParams()
+  const { user } = useUser()
+  const slug = params.slug as string
+
+  const [post, setPost] = useState<PostWithDetails | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [commentContent, setCommentContent] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  const fetchPost = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/posts/slug/${slug}`)
+      if (response.ok) {
+        const data = await response.json()
+        setPost(data)
+      } else {
+        toast.error('Post não encontrado')
+      }
+    } catch (error) {
+      console.error('Error fetching post:', error)
+      toast.error('Erro ao carregar post')
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
-export default function PostPage({ params }: PostPageProps) {
+  useEffect(() => {
+    fetchPost()
+  }, [slug])
+
+  const handleSubmitComment = async () => {
+    if (!user) {
+      toast.error('Faça login para comentar')
+      return
+    }
+
+    if (!commentContent.trim()) {
+      toast.error('Digite um comentário')
+      return
+    }
+
+    setSubmittingComment(true)
+
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: commentContent.trim(),
+          postId: post?.id,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Comentário enviado! Aguarde a moderação.')
+        setCommentContent('')
+        fetchPost() // Recarregar para mostrar comentários atualizados
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Erro ao enviar comentário')
+      }
+    } catch (error) {
+      console.error('Error submitting comment:', error)
+      toast.error('Erro ao enviar comentário')
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <p>Carregando post...</p>
+      </div>
+    )
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Post não encontrado</h1>
+          <Link href="/blog">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar ao blog
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Header */}
@@ -49,34 +148,52 @@ export default function PostPage({ params }: PostPageProps) {
         {/* Post Header */}
         <article className="bg-background rounded-lg shadow-sm border p-8 mb-8">
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Badge variant="secondary">Tecnologia</Badge>
-              <Badge variant="default">Destaque</Badge>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {post.category && (
+                <Badge
+                  variant="secondary"
+                  style={{ backgroundColor: (post.category.color || '#6366f1') + '20', color: post.category.color || '#6366f1' }}
+                >
+                  {post.category.name}
+                </Badge>
+              )}
+              {post.featured && <Badge variant="default">Destaque</Badge>}
+              {post.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag.id} variant="outline">
+                  {tag.name}
+                </Badge>
+              ))}
             </div>
             <h1 className="text-4xl font-bold mb-4">
-              Como construir um blog moderno com Next.js
+              {post.title}
             </h1>
-            <p className="text-xl text-muted-foreground mb-6">
-              Aprenda a criar um blog completo usando as melhores tecnologias 
-              do mercado, incluindo Next.js, Prisma e Clerk para autenticação.
-            </p>
+            {post.excerpt && (
+              <p className="text-xl text-muted-foreground mb-6">
+                {post.excerpt}
+              </p>
+            )}
           </div>
 
           {/* Author and Meta */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <Avatar>
-                <AvatarImage src="/placeholder-avatar.jpg" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src={post.author.imageUrl || undefined} />
+                <AvatarFallback>
+                  {post.author.firstName?.[0]}{post.author.lastName?.[0]}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">Admin</p>
+                <p className="font-medium">{post.author.firstName} {post.author.lastName}</p>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <CalendarDays className="h-4 w-4" />
-                    <span>24 Jun 2025</span>
+                    <span>{format(new Date(post.createdAt), 'dd MMM yyyy', { locale: ptBR })}</span>
                   </div>
-                  <span>5 min de leitura</span>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>{post._count.comments} comentários</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -96,53 +213,7 @@ export default function PostPage({ params }: PostPageProps) {
 
           {/* Post Content */}
           <div className="prose prose-lg max-w-none">
-            <p>
-              Neste tutorial, vamos aprender como criar um blog moderno e completo 
-              usando Next.js 15, Prisma como ORM e Clerk para autenticação. 
-              Este projeto será uma base sólida para qualquer tipo de blog ou CMS.
-            </p>
-
-            <h2>Tecnologias Utilizadas</h2>
-            <ul>
-              <li><strong>Next.js 15</strong> - Framework React para produção</li>
-              <li><strong>Prisma</strong> - ORM moderno para TypeScript</li>
-              <li><strong>Clerk</strong> - Autenticação completa</li>
-              <li><strong>Tailwind CSS</strong> - Framework CSS utilitário</li>
-              <li><strong>Shadcn/ui</strong> - Componentes UI reutilizáveis</li>
-            </ul>
-
-            <h2>Configuração Inicial</h2>
-            <p>
-              Primeiro, vamos criar um novo projeto Next.js e instalar todas as 
-              dependências necessárias. O processo é simples e direto.
-            </p>
-
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-              <code>
-{`npx create-next-app@latest blog --typescript --tailwind --eslint
-cd blog
-npm install @prisma/client prisma @clerk/nextjs`}
-              </code>
-            </pre>
-
-            <h2>Estrutura do Banco de Dados</h2>
-            <p>
-              Vamos criar um schema Prisma que suporte posts, categorias, tags, 
-              comentários e usuários. Esta estrutura é flexível e escalável.
-            </p>
-
-            <h2>Implementação da Autenticação</h2>
-            <p>
-              O Clerk fornece uma solução completa de autenticação que inclui 
-              login, registro, gerenciamento de perfil e muito mais.
-            </p>
-
-            <h2>Conclusão</h2>
-            <p>
-              Com essas tecnologias, você terá um blog moderno, seguro e escalável. 
-              O Next.js oferece excelente performance, o Prisma facilita o trabalho 
-              com banco de dados e o Clerk cuida de toda a autenticação.
-            </p>
+            <div dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }} />
           </div>
         </article>
 
@@ -151,37 +222,114 @@ npm install @prisma/client prisma @clerk/nextjs`}
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              Comentários (3)
+              Comentários ({post._count.comments})
             </CardTitle>
+            <CardDescription>
+              Participe da discussão sobre este post
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Comment */}
-            <div className="flex gap-4">
-              <Avatar>
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium">João Silva</span>
-                  <span className="text-sm text-muted-foreground">há 2 horas</span>
-                </div>
-                <p className="text-sm">
-                  Excelente tutorial! Muito bem explicado e fácil de seguir. 
-                  Já estou implementando no meu projeto.
-                </p>
+            {/* Comment Form */}
+            {user ? (
+              <div className="space-y-4">
+                <h3 className="font-medium">Deixe seu comentário</h3>
+                <Textarea
+                  placeholder="Escreva seu comentário aqui..."
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  rows={4}
+                />
+                <Button
+                  onClick={handleSubmitComment}
+                  disabled={submittingComment || !commentContent.trim()}
+                  className="gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {submittingComment ? 'Enviando...' : 'Enviar comentário'}
+                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-6 border rounded-lg">
+                <p className="text-muted-foreground mb-4">
+                  Faça login para deixar um comentário
+                </p>
+                <Link href="/sign-in">
+                  <Button>Fazer login</Button>
+                </Link>
+              </div>
+            )}
 
-            <Separator />
+            {post.comments.length > 0 && <Separator />}
 
-            {/* Add Comment */}
-            <div className="text-center py-4">
-              <p className="text-muted-foreground mb-4">
-                Faça login para comentar
-              </p>
-              <Link href="/sign-in">
-                <Button>Entrar</Button>
-              </Link>
+            {/* Comments List */}
+            <div className="space-y-6">
+              {post.comments.map((comment) => (
+                <div key={comment.id} className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Avatar>
+                      <AvatarImage src={comment.author.imageUrl || undefined} />
+                      <AvatarFallback>
+                        {comment.author.firstName?.[0]}{comment.author.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">
+                          {comment.author.firstName} {comment.author.lastName}
+                        </span>
+                        {comment.author.id === post.author.id && (
+                          <Badge variant="secondary" className="text-xs">Autor</Badge>
+                        )}
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(comment.createdAt), 'dd MMM yyyy', { locale: ptBR })}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="ml-12 space-y-3">
+                      {comment.replies.map((reply) => (
+                        <div key={reply.id} className="flex items-start gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={reply.author.imageUrl || undefined} />
+                            <AvatarFallback>
+                              {reply.author.firstName?.[0]}{reply.author.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">
+                                {reply.author.firstName} {reply.author.lastName}
+                              </span>
+                              {reply.author.id === post.author.id && (
+                                <Badge variant="secondary" className="text-xs">Autor</Badge>
+                              )}
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(reply.createdAt), 'dd MMM yyyy', { locale: ptBR })}
+                              </span>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap">
+                              {reply.content}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {post.comments.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Seja o primeiro a comentar!</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

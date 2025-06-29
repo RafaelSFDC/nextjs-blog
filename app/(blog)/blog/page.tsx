@@ -1,18 +1,14 @@
-import { Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Calendar, User, MessageCircle, Search, Clock, Eye } from 'lucide-react'
+import { Calendar, User, MessageCircle, Search, Clock } from 'lucide-react'
 import { PostWithDetails } from '@/types/blog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
-import { SearchFilters } from '@/components/search-filters'
-import { PaginationControls } from '@/components/pagination-controls'
-import { BlogSidebar } from '@/components/blog-sidebar'
 import { calculateReadingTime } from '@/lib/reading-time'
 import { searchPosts } from '@/app/actions/posts'
 import { getCategories } from '@/app/actions/categories'
@@ -21,119 +17,178 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Blog | Meu Blog',
-  description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira. Conteúdo atualizado regularmente sobre programação, Next.js, React e muito mais.',
-  keywords: ['blog', 'desenvolvimento web', 'programação', 'artigos', 'tecnologia', 'Next.js', 'React'],
-  openGraph: {
-    title: 'Blog | Meu Blog',
-    description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira.',
-    type: 'website',
-    url: '/blog',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Blog | Meu Blog',
-    description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira.',
-  },
+  description: 'Explore artigos sobre desenvolvimento web, tecnologia e carreira.',
 }
 
 interface BlogPageProps {
   searchParams: Promise<{
     query?: string
     categoryId?: string
-    tagIds?: string
-    status?: PostStatus
-    featured?: string
-    authorId?: string
-    sortBy?: 'createdAt' | 'updatedAt' | 'publishedAt' | 'title'
-    sortOrder?: 'asc' | 'desc'
     page?: string
-    limit?: string
   }>
 }
 
-async function BlogContent({ searchParams }: BlogPageProps) {
-  // Parse search parameters
+export default async function BlogPage({ searchParams }: BlogPageProps) {
   const params = await searchParams
+  
+  // Parse parameters with proper types
+  const page = parseInt(params.page || '1')
+  
   const filters = {
     query: params.query,
     categoryId: params.categoryId,
-    tagIds: params.tagIds?.split(','),
-    status: PostStatus.PUBLISHED, // Always show only published posts on blog
-    featured: params.featured === 'true' ? true : undefined,
-    authorId: params.authorId,
-    sortBy: params.sortBy || 'createdAt',
-    sortOrder: params.sortOrder || 'desc',
-    page: parseInt(params.page || '1'),
-    limit: parseInt(params.limit || '9'),
+    status: PostStatus.PUBLISHED,
+    page,
+    limit: 9,
+    sortBy: 'createdAt' as const,
+    sortOrder: 'desc' as const,
   }
 
-  // Fetch data in parallel
+  // Fetch data
   const [postsResult, categories] = await Promise.all([
     searchPosts(filters),
-    getCategories(true) // includeCount = true
+    getCategories(true)
   ])
 
   return (
-    <div className="grid lg:grid-cols-4 gap-8">
-      {/* Main Content */}
-      <div className="lg:col-span-3">
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <SearchFilters
-            categories={categories}
-            showFeaturedFilter={true}
-            showSortOptions={true}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+      <Header />
+
+      {/* Hero Section */}
+      <section className="py-16 px-4 bg-background/50 border-b">
+        <div className="container mx-auto text-center">
+          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Blog</h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Compartilhando conhecimento sobre desenvolvimento, tecnologia e experiências pessoais
+          </p>
         </div>
+      </section>
 
-        {/* Posts Grid */}
-        {postsResult.data.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Search className="h-8 w-8 text-muted-foreground" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Simple Search */}
+            <div className="mb-8">
+              <form method="GET" className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <input
+                      type="text"
+                      name="query"
+                      placeholder="Buscar posts..."
+                      defaultValue={params.query || ''}
+                      className="w-full pl-10 pr-4 py-2 border border-input bg-background rounded-md"
+                    />
+                  </div>
+                </div>
+                <Button type="submit">Buscar</Button>
+              </form>
+            </div>
+
+            {/* Category Filter */}
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                <Link href="/blog">
+                  <Badge variant={!params.categoryId ? "default" : "outline"}>
+                    Todos
+                  </Badge>
+                </Link>
+                {categories.map((category) => (
+                  <Link key={category.id} href={`/blog?categoryId=${category.id}`}>
+                    <Badge variant={params.categoryId === category.id ? "default" : "outline"}>
+                      {category.name} ({category._count.posts})
+                    </Badge>
+                  </Link>
+                ))}
               </div>
-              <h3 className="text-lg font-semibold mb-2">Nenhum post encontrado</h3>
-              <p className="text-muted-foreground mb-4">
-                Tente ajustar os filtros ou buscar por outros termos
-              </p>
-              <Link href="/blog">
-                <Button variant="outline">Ver todos os posts</Button>
-              </Link>
             </div>
+
+            {/* Posts Grid */}
+            {postsResult.data.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Nenhum post encontrado</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Tente ajustar os filtros ou buscar por outros termos
+                  </p>
+                  <Link href="/blog">
+                    <Button variant="outline">Ver todos os posts</Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Results Summary */}
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    {postsResult.pagination.total} {postsResult.pagination.total === 1 ? 'post encontrado' : 'posts encontrados'}
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {postsResult.data.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+
+                {/* Simple Pagination */}
+                {postsResult.pagination.totalPages > 1 && (
+                  <div className="flex justify-center gap-2">
+                    {postsResult.pagination.hasPrev && (
+                      <Link href={`/blog?page=${page - 1}${params.query ? `&query=${params.query}` : ''}${params.categoryId ? `&categoryId=${params.categoryId}` : ''}`}>
+                        <Button variant="outline">Anterior</Button>
+                      </Link>
+                    )}
+                    
+                    <span className="flex items-center px-4">
+                      Página {page} de {postsResult.pagination.totalPages}
+                    </span>
+                    
+                    {postsResult.pagination.hasNext && (
+                      <Link href={`/blog?page=${page + 1}${params.query ? `&query=${params.query}` : ''}${params.categoryId ? `&categoryId=${params.categoryId}` : ''}`}>
+                        <Button variant="outline">Próxima</Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            {/* Results Summary */}
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {postsResult.pagination.total} {postsResult.pagination.total === 1 ? 'post encontrado' : 'posts encontrados'}
-              </p>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              {postsResult.data.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <PaginationControls
-              currentPage={postsResult.pagination.page}
-              totalPages={postsResult.pagination.totalPages}
-              hasNext={postsResult.pagination.hasNext}
-              hasPrev={postsResult.pagination.hasPrev}
-              total={postsResult.pagination.total}
-              limit={postsResult.pagination.limit}
-            />
-          </>
-        )}
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Categorias</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <Link key={category.id} href={`/blog?categoryId=${category.id}`}>
+                      <div className="flex items-center justify-between p-2 rounded hover:bg-muted">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-primary" />
+                          <span className="text-sm">{category.name}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {category._count.posts}
+                        </Badge>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Sidebar */}
-      <div className="lg:col-span-1">
-        <BlogSidebar categories={categories} />
-      </div>
+      <Footer />
     </div>
   )
 }
@@ -143,7 +198,7 @@ function PostCard({ post }: { post: PostWithDetails }) {
 
   return (
     <Link href={`/blog/${post.slug}`}>
-      <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-0 shadow-md hover:scale-[1.02]">
+      <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full">
         {post.coverImage && (
           <div className="aspect-video overflow-hidden rounded-t-lg relative">
             <Image
@@ -153,37 +208,24 @@ function PostCard({ post }: { post: PostWithDetails }) {
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         )}
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {post.category && (
-              <Link href={`/category/${post.category.slug}`} onClick={(e) => e.stopPropagation()}>
-                <Badge
-                  variant="secondary"
-                  className="font-medium hover:opacity-80 transition-opacity cursor-pointer"
-                  style={{
-                    backgroundColor: (post.category.color || '#6366f1') + '20',
-                    color: post.category.color || '#6366f1',
-                    borderColor: (post.category.color || '#6366f1') + '30'
-                  }}
-                >
-                  {post.category.name}
-                </Badge>
-              </Link>
-            )}
-            {post.featured && (
-              <Badge variant="default" className="bg-gradient-to-r from-primary to-primary/80">
-                ⭐ Destaque
+              <Badge variant="secondary">
+                {post.category.name}
               </Badge>
             )}
+            {post.featured && (
+              <Badge variant="default">⭐ Destaque</Badge>
+            )}
           </div>
-          <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors duration-200 text-lg">
+          <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors text-lg">
             {post.title}
           </CardTitle>
           {post.excerpt && (
-            <CardDescription className="line-clamp-3 text-sm leading-relaxed">
+            <CardDescription className="line-clamp-3 text-sm">
               {post.excerpt}
             </CardDescription>
           )}
@@ -193,14 +235,12 @@ function PostCard({ post }: { post: PostWithDetails }) {
           {post.tags.length > 0 && (
             <div className="flex items-center gap-1 mb-4 flex-wrap">
               {post.tags.slice(0, 3).map((tag) => (
-                <Link key={tag.id} href={`/tag/${tag.slug}`} onClick={(e) => e.stopPropagation()}>
-                  <Badge variant="outline" className="text-xs px-2 py-1 hover:bg-muted transition-colors cursor-pointer">
-                    #{tag.name}
-                  </Badge>
-                </Link>
+                <Badge key={tag.id} variant="outline" className="text-xs">
+                  #{tag.name}
+                </Badge>
               ))}
               {post.tags.length > 3 && (
-                <Badge variant="outline" className="text-xs px-2 py-1">
+                <Badge variant="outline" className="text-xs">
                   +{post.tags.length - 3}
                 </Badge>
               )}
@@ -231,84 +271,5 @@ function PostCard({ post }: { post: PostWithDetails }) {
         </CardContent>
       </Card>
     </Link>
-  )
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="grid lg:grid-cols-4 gap-8">
-      {/* Main Content Skeleton */}
-      <div className="lg:col-span-3 space-y-8">
-        {/* Filters Skeleton */}
-        <div className="space-y-4">
-          <div className="h-10 bg-muted rounded-md animate-pulse" />
-          <div className="flex gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-8 w-20 bg-muted rounded-full animate-pulse" />
-            ))}
-          </div>
-        </div>
-
-        {/* Posts Grid Skeleton */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-4">
-              <div className="aspect-video bg-muted rounded-lg animate-pulse" />
-              <div className="space-y-3 p-4">
-                <div className="flex gap-2">
-                  <div className="h-5 w-16 bg-muted rounded-full animate-pulse" />
-                  <div className="h-5 w-12 bg-muted rounded-full animate-pulse" />
-                </div>
-                <div className="h-6 bg-muted rounded animate-pulse" />
-                <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-                <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Sidebar Skeleton */}
-      <div className="lg:col-span-1 space-y-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="border rounded-lg p-4 space-y-3">
-            <div className="h-6 bg-muted rounded animate-pulse w-3/4" />
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} className="h-4 bg-muted rounded animate-pulse" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export default function BlogPage({ searchParams }: BlogPageProps) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <Header />
-
-      {/* Hero Section */}
-      <section className="py-16 px-4 bg-background/50 border-b">
-        <div className="container mx-auto text-center">
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">
-            Blog
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Compartilhando conhecimento sobre desenvolvimento, tecnologia e experiências pessoais
-          </p>
-        </div>
-      </section>
-
-      <div className="container mx-auto px-4 py-8">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <BlogContent searchParams={searchParams} />
-        </Suspense>
-      </div>
-
-      <Footer />
-    </div>
   )
 }

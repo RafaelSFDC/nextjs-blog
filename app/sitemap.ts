@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Get all published posts
     const postsResult = await searchPosts({
       status: PostStatus.PUBLISHED,
-      limit: 1000, // Get all posts
+      limit: 100, // Maximum allowed by schema
       sortBy: 'updatedAt',
       sortOrder: 'desc',
     })

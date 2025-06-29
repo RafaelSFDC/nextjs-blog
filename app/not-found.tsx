@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           {/* Error Icon */}
@@ -28,12 +28,12 @@ export default function NotFound() {
                 Ops! A página que você está procurando não existe ou foi movida.
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="space-y-6">
               <p className="text-muted-foreground">
                 Isso pode ter acontecido porque:
               </p>
-              
+
               <ul className="text-left text-muted-foreground space-y-2 max-w-md mx-auto">
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
@@ -57,22 +57,20 @@ export default function NotFound() {
                     Ir para o Início
                   </Button>
                 </Link>
-                
+
                 <Link href="/blog">
                   <Button variant="outline" className="gap-2 w-full sm:w-auto">
                     <Search className="h-4 w-4" />
                     Ver Posts
                   </Button>
                 </Link>
-                
-                <Button 
-                  variant="ghost" 
-                  onClick={() => window.history.back()}
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
+
+                <Link href="/blog">
+                  <Button variant="ghost" className="gap-2 w-full sm:w-auto">
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar ao Blog
+                  </Button>
+                </Link>
               </div>
 
               {/* Search Suggestion */}
